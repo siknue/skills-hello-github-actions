@@ -4,3 +4,28 @@ on:
     types: [opened]
 permissions:
   pull-requests: write
+
+jobs:
+  install-dependencies:
+    name: install-dependencies/ci
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install yarn (enable Corepack)
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://npm.pkg.github.com'
+          cache: 'yarn'
+          cache-dependency-path: './yarn.lock'
+
+      - name: Install dependencies
+        # Skip post-install scripts here, as a malicious
+        # script could steal NPM_AUTH_TOKEN.
+        run: |
+          yarn install --frozen-lockfile --ignore-scripts
